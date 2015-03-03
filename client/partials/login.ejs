@@ -1,0 +1,24 @@
+<div id='container' ng-controller='loginController'>
+    
+    <div id='head'>
+        <h2>We're make this angular baby!!</h2>
+            header - common header to come.
+    </div>
+
+    <div id='login'><form>
+        <table id='add'>
+            <tr>
+                <td>Email:</td><td><input type='text' ng-model='login.email' size=30 maxlength=60 placeholder='Email ...'><br></td>
+            </tr>
+            <tr>
+                <td>Password:</td><td><input type='password' ng-model='login.password' size=30 maxlength=30 placeholder='Password...'></td></tr>
+            <tr>
+            <td colspan=2 align='right'><input class='add' type='submit' value='LOGIN' ng-click='loginUser()'></td></form></tr>
+        </table>
+    </div>
+
+    <div id='footer'> footer - common footer to come </div>
+    <!-- will hide profile until logged in later -->
+    <a href='#/loginuser'>Login</a>&nbsp;|&nbsp;<a href='#/register'>Register</a>&nbsp;|&nbsp;<a href='#/profile'>Profile</a>
+
+</div>        

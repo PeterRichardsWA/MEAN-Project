@@ -1,0 +1,49 @@
+<html ng-app='SportsApp'>
+<head>
+    <script src='/scripts/externals/angular.min.js'/></script>
+    <script src='/scripts/externals/angular-route.min.js'/></script>
+    <script src='/scripts/externals/jquery-2.1.3.min.js'/></script>
+    <script src='/scripts/externals/jquery-ui.js'/></script>
+    <link rel="stylesheet" type="text/css" href="/scripts/externals/jquery-ui.css">
+    <script src='/scripts/app.js'/></script>
+    <script>
+    	$(document).ready(function() {
+
+
+
+    	});
+    </script>
+	<meta charset="UTF-8">
+	<title>Sports Management System - View Live!</title>
+	<style>
+	*{
+		font-family: 'helvetica neu',tahoma,verdana;
+	}
+	.halfl {
+		float: left;
+		width: 50%;
+		text-align: left;
+	}
+	.halfr {
+		float: left;
+		width: 50%;
+		text-align: right;
+		font-size: 8pt;
+	}
+	.clear {
+		clear: both;
+	}
+	#container {
+		width: 500px;
+		margin: 0 auto;
+	}
+	</style>
+</head>
+<body>
+	
+<div ng-app='myApp'>
+	<div ng-view=''></div>
+</div>
+	
+</body>
+</html>

@@ -1,0 +1,28 @@
+ <div ng-controller='customersController'>
+        <div id='addname'>
+    		<h4 class='ul'>Add a new customer</h4>
+    		Customer Name: <input type='text' ng-model='newCustomer.name' size=30 maxlength=30 placeholder='name here'>
+    		<input class='add' type='submit' value='Add Customer' ng-click='addCustomer()'>
+        </div>
+
+        <div id='search'>
+        	Search Customers: <input type="text" ng-model="filter_name">
+        </div>
+
+    	<div id='tablebox'>
+    	    <table>
+    	      	<tbody>
+    	      		<tr>
+    	      			<th><a href='' ng-click='predicate="name"; reverse=!reverse'>Customer Name</a></th><th><a href='' ng-click='predicate="createdDate"; reverse=!reverse'>Created Date</a></th><th class='date'>Actions</th>
+    	      		</tr>
+    	      	
+    				<tr ng-repeat="customer in customers | filter:filter_name | orderBy:predicate:reverse" ng-class-odd="'odd'" ng-class-even="'even'">
+    		    		<td ng-bind='customer.name'></td>
+    	        		<td class='date' ng-bind="customer.createdDate | date:'longDate'"></td>
+                   		<td class='action'><button ng-click='removeCustomer(customer)'>REMOVE</button></td>
+    		     	</tr>
+    	        	
+    	      	</tbody>
+    		</table>
+        </div>
+</div>
