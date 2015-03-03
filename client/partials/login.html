@@ -1,28 +1,48 @@
- <div ng-controller='customersController'>
-        <div id='addname'>
-    		<h4 class='ul'>Add a new customer</h4>
-    		Customer Name: <input type='text' ng-model='newCustomer.name' size=30 maxlength=30 placeholder='name here'>
-    		<input class='add' type='submit' value='Add Customer' ng-click='addCustomer()'>
-        </div>
+<div id='container' ng-controller='loginController'>
+    
+    <div id='head'>
+        <h2 id='saTitle'>Login</h2>
+    </div>
 
-        <div id='search'>
-        	Search Customers: <input type="text" ng-model="filter_name">
-        </div>
+    <div id='login'><form>
+        <table id='add'>
+            <tbody>
+                <tr>
+                    <td>Email:</td><td><input type='text' ng-model='login.email' size=30 maxlength=60 placeholder='Email ...'><br></td>
+                </tr>
+                <tr>
+                    <td>Password:</td><td><input type='password' ng-model='login.password' size=30 maxlength=30 placeholder='Password...'></td>
+                <tr>
+            </tbody>
+            <tbody id='table_mid' style='display:none'>
+                <tr>
+                    <td>Confirm:</td><td><input type='password' ng-model='login.confirm' size=30 maxlength=30 placeholder='Confirm...'></td>
+                <tr>
+                <tr>
+                    <td>First Name:</td><td><input type='text' ng-model='login.firstname' size=30 maxlength=60 placeholder='First Name...'><br></td>
+                </tr>
+                <tr>
+                    <td>Last Name:</td><td><input type='text' ng-model='login.lastname' size=30 maxlength=60 placeholder='Last Name ...'><br></td>
+                </tr>
+                <tr>
+                    <td>Who Are You?:</td><td><select ng-model='login.usertype'>
+                        <option value='Individual'>Individual</option>
+                        <option value='Athlete'>Athlete</option>
+                        <option value='Athlete'>Parent</option>
+                        <option value='Coach'>Coach</option>
+                        <option value='Recruiter'>Recruiter</option>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+            <tbody id='table_foot'>
+                <tr>
+                    <td colspan=2 align='right'><a href='#' class='button button-blue' ng-click='loginUser()'><span id='saButName'>LOGIN</span></a></td></form>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
-    	<div id='tablebox'>
-    	    <table>
-    	      	<tbody>
-    	      		<tr>
-    	      			<th><a href='' ng-click='predicate="name"; reverse=!reverse'>Customer Name</a></th><th><a href='' ng-click='predicate="createdDate"; reverse=!reverse'>Created Date</a></th><th class='date'>Actions</th>
-    	      		</tr>
-    	      	
-    				<tr ng-repeat="customer in customers | filter:filter_name | orderBy:predicate:reverse" ng-class-odd="'odd'" ng-class-even="'even'">
-    		    		<td ng-bind='customer.name'></td>
-    	        		<td class='date' ng-bind="customer.createdDate | date:'longDate'"></td>
-                   		<td class='action'><button ng-click='removeCustomer(customer)'>REMOVE</button></td>
-    		     	</tr>
-    	        	
-    	      	</tbody>
-    		</table>
-        </div>
-</div>
+    <div id='footer'><a id='saLogin' onClick='hideReg()' href=''>Login</a>&nbsp;|&nbsp;<a id='saRegister' onClick='showReg()' href=''>Register</a></div>
+
+</div>        
