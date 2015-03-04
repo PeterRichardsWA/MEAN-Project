@@ -26,6 +26,10 @@ myApp.config(function ($routeProvider) {
         templateUrl: '/partials/profile.html',
     })
 
+    .when('/coach',{
+        templateUrl: '/partials/coaches.html',
+    })
+
     .otherwise({
         redirectTo: '/'
     });

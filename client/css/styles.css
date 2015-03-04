@@ -66,3 +66,14 @@
 .button-blue:active {
     background: #4477a1;
 }
+
+/* Header on the pages */
+#header {
+    display: block;
+    padding: 0.5em 2.5em;    
+    /* The background pattern */
+    background-image: linear-gradient(45deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent),
+                      linear-gradient(-45deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent),
+                      linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.05) 75%),
+                      linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.05) 75%);
+}
