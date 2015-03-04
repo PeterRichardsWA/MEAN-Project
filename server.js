@@ -136,53 +136,41 @@ app.get('/getdata/:id', function(req, res) { // catch the href outside of the fo
 app.post('/login', function(req, res) {
 	
 	console.log('POST: ', req.body);
+	console.log(' ******* LEVEL 1');
 
- 	var confirm = '';
- 	var firstName ='';
- 	var lastName = '';
- 	var typeOfUser = '';
- 	//var redir = '/'; // default redir out of here...back to login
- 	var success = false;
+ 	// redir should happen from here!!
+ 	if(checkUserLoginReg(req.body)) {
+ 		res.redirect('/sports');
+ 	} else {
+ 		res.redirect('/');
+ 	}
+
+});
+
+function checkUserLoginReg(userInfo) {
+
+	console.log('*** checking user.  log in, or register....');
+ 	console.log(' ******* LEVEL 1');
 
  	// the only two "should be" guaranteed entry data points
- 	var email = req.body.email;
-	var passWord = req.body.password;
+ 	var email = userInfo.email;
+	var passWord = userInfo.password;
+	var success = false;
 
-	if(!is_Empty(req.body.confirm)) {
-		confirm = req.body.confirm;
-	}
-	if(!is_Empty(req.body.firstname)) {
-		firstName = req.body.firstname;
-	}
-	if(!is_Empty(req.body.lastname)) {
-		lastName = req.body.lastname;
-	}
-	//var title = req.body.title;
-	//var teamName = req.body.teamname; // can also be self --- ie golf, swimmers, track....
-	if(!is_Empty(req.body.usertype)) {
-		typeOfUser = req.body.usertype; // player/athlete - coach - parent - recruiter.
-	}
-	//var myView = req.body.myView; // hard coded for now
-	console.log('Got past all checks for blank data.');
-
-// if not valid email.  should we email them and have them verify later? yes!
+	// if not valid email.  should we email them and have them verify later? yes!
 	var patt = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 	var regResult = patt.test(email);
 	console.log('Email regEx is:', regResult);
 
-	if(regResult) {
+	if(regResult && passWord != null) { // looks good.
+				
+		console.log('Email and password is good...');
+		var user = {};
 
-		if (passWord != null) {
-			console.log('Email and password is good...');
-			// try and login.  will return 99 if no good.
+		SportsUser.findOne({ email: email, passWord: passWord}, function(err, user) {
+			console.log(' ******* LEVEL 2');
+			if(err) {
 
-			// only do this check once with an email and password. too expensive to do more than once.
-			// if user exists, the function will log them in and then redirect to correct page.
-			if(!checkLoginUser(email, passWord)) { // since we have email and password, attempt a login here. false if no exist
-
-				console.log('User does not exist.  now go into rest of check');
-
-				// are entered passwords the same?
 				if(passWord == confirm && confirm != null) {
 					console.log('Confirm matches password...');
 							
@@ -207,15 +195,18 @@ app.post('/login', function(req, res) {
 					teamName = 'Newport Volleyball';
 				
 					// store all data in user object for MongoDB
-					var myData = {	
+					var myData = {
+
 						email: email,			// id to login with password
-						passWord: passWord,
-						firstName: firstName,
-						lastName: lastName,
+						passWord: password,
+						firstName: userInfo.firstname,
+						lastName: userInfo.lastname,
+						
 						title: title,			// title - coach, mom, dad, mr, mrs, etc.
 						team: teamName,			// name of team or self!
 						typeOfUser: typeOfUser,	// type of user
 						myView: myView,			// view they want to land on.
+
 						logins: 1,
 						uniqueLoginID: uniqueLoginID,
 						timeOutuniqueLoginID: timeOutuniqueLoginID,
@@ -224,44 +215,96 @@ app.post('/login', function(req, res) {
 
 					console.log('Save to database');
 					// found, so log in user and set fake session id for identification.
-					
-					var sportsuser = new SportsUser(myData);
-				 	console.log('mydata: ', myData);
 
 					// sportsuser.save(function(err) { // actual insertion to DB here.
-				 	sportsuser.save(function(err) { // actual insertion to DB here.
+				 	SportsUser.update({ email: email, passWord: passWord}, myData, {upsert: true}, function(err) { // actual insertion to DB here.
 				 		
+				 		console.log(' ******* LEVEL 3');
 				 		if(err) {
 				 			
 				 			console.log('Could not save new user to database...');
-				 			res.render('errors', {myerr: err});
 				 		
 				 		} else {
 
 				 			console.log('No error in saving new user...');
 
-				 			console.log('***** redirecting after registration ******');
+				 			console.log('***** Redirecting after registration add ******');
 				 			success = true;
 				 		}
 
 			 		});
-				}
-				// passwords dont match. send user a message!
+
+				} // checking password on register for confirm
 
 			} else {
-				success = true;
-			}
-		}
-	}
 
-	console.log('redirecting....', success);
-	if(success) {
-		setMySessionID(req, uniqueLoginID, timeOutuniqueLoginID); // set the session id into session once!
-		res.redirect('/sports');
+
+				// log them in
+				console.log('user found, log them in!');
+
+				var d = new Date();
+				thisDate = d.getTime(); // needed
+
+				console.log('err: '+err);
+				console.log('Found user: '+user);
+
+				var logins = user.logins;
+			 	logins++;
+
+			 	// put back into db
+			 	user.logins = logins; // set login times/ track usage.
+			 	
+			 	var lastLoginDate = user.modifiedAt; // get first for differential on login times later on.
+			 	user.modifiedAt = thisDate; // set modified at time for last login.
+			 	// get
+			 	var myView = user.myView; // get the view this person will land on when logged in
+
+			 	// save this to DB with time for timeout. for dev we'll use 60 min timeout.
+			 	var uniqueLoginID = getUniqueID();  // get 30 char unique id for this session....fake session id.
+			 	var timeOutuniqueLoginID = new Date();
+			 	timeOutuniqueLoginID.setMinutes(timeOutuniqueLoginID.getMinutes()+appSessionTimeout);
+			 	// see definition in var def at begging of app.
+
+				// found the user already. log em in and send them along
+				// found, so log in user and set fake session id for identification.
+				console.log('Updating session data in DB for this user before we login.');	
+				
+				SportsUser.update( { email: email, passWord: passWord }, {$set: {logins: logins, uniqueLoginID: uniqueLoginID, timeOutuniqueLoginID: timeOutuniqueLoginID,
+	modifiedAt: thisDate }}, function(err) { // update info for user.
+		 			console.log(' ******* LEVEL 3b');
+		 			if(err) { // we have to check isFromRegister to determine if we login or are checking from register
+		 				
+		 				// somehow we are ending up here even after adding a new user.
+		 				console.log('Could not log this user in and update login information.'); // we need to use a flag for how we entered this function.
+		 				// cannot update.  prob shouldn't res.render
+
+			 		} else  {
+			 			console.log('Normal Login, all good - move along...');
+			 		
+			 			// page depends on who it is.
+			 			console.log('****** Redirecting to Inside Wall ******');
+			 			success = true;
+			 		}
+
+		 		}); // end of err on update
+
+			} // end of err on findone
+		
+		}); // close of sportuser.findone
+
 	} else {
-		res.redirect('/'); // no reg or login, go here.
+
+		console.log('Email or Password bad.');
+
+	} // end of email and pw check
+
+	if(success) {
+		// these will be set if new OR login
+		setMySessionID(uniqueLoginID, timeOutuniqueLoginID); // set the session id into session once!
 	}
-});
+	return success;
+};
+
 
 //
 // handle errors passed to us from angular!
@@ -319,6 +362,10 @@ app.delete('/users/:id', function(req, res) {
  	});
 });
 
+// catch errors and bad URLS
+app.get('*', function(req, res) {
+	res.send('404');
+})
 // socket server - may not implement due to time.
 // io.sockets.on('connection', function(socket) {
 // 	console.log('****** SOCKET LISTENER STARTED ******');
@@ -339,13 +386,15 @@ app.delete('/users/:id', function(req, res) {
 // 	});
 // });
 
+
 //
 // FUNCTION - set session id and timeout
 // simply ses session dependency on express-session - may get deprecated.
 function setMySessionID(uniqueLoginID, timeOutuniqueLoginID) {
-	eSession = req.session;
+	console.log('** Setting session data **');
 	eSession.fakeSessionID = uniqueLoginID;
 	eSession.timeOut = timeOutuniqueLoginID;
+	return;
 }
 
 //
@@ -353,6 +402,8 @@ function setMySessionID(uniqueLoginID, timeOutuniqueLoginID) {
 // *** also fires on reload of page.
 function checkLoginState() { // pass current res...
 	
+	console.log(' ******* LEVEL 2b');
+
 	// eSession comes from def at beginning of file.
 	var checkID = eSession.fakeSessionID;
 	var checkTime = eSession.timeOut;
@@ -363,10 +414,10 @@ function checkLoginState() { // pass current res...
 	// check against the database stored token. if found, then check time.  if time is expired, send to login.
 	// otherwise we need to update the token's timeout in db.
 	SportsUser.findOne({ uniqueLoginID: checkID }, function(err, user) {
+		console.log(' ******* LEVEL 3b');
 
 		if(err) {
 			// error so go to login page.
-			myFlag = false;
 
 		} else {
 
@@ -384,16 +435,18 @@ function checkLoginState() { // pass current res...
 				// set new timeout
 				console.log('Setting NEW session timeout');
 				SportsUser.update({ uniqueLoginID: checkID }, {$set: { timeOutuniqueLoginID: timeOutuniqueLoginID}}, function(err) {
+					console.log(' ******* LEVEL 4b');
+
 					if(err) {
 						// oops. something bad
 						console.log('DB error updating session');
-						myFlag = false;
 
 					} else {
+
  						setMySessionID(uniqueLoginID, timeOutuniqueLoginID); // set the session id into session!?
 				 		// want to use render to pass some data without loading from session or db
 				 		console.log('***** redirecting after session update ******');
-				 		res.redirect('/sports'); // blind redirect as we are LOGGED IN!!!
+				 		//res.redirect('/sports'); // blind redirect as we are LOGGED IN!!!
 						myFlag = true; // return true for the process to proceed.
 
 					}
@@ -402,8 +455,7 @@ function checkLoginState() { // pass current res...
 			} else {
 				// redirect to login.
 				console.log('*** Session Timed out!');
-				myFlag = false;
-
+				
 			}
 		}
 	});
@@ -430,82 +482,7 @@ function getUniqueID() {
 	return myString;
 }
 
-//
-// login the user. - move to methods.exports
-//
-function checkLoginUser(email, passWord) {
-	// return false if doesn't exist. otherwise login and forward.
-	// called within a post so req & res exists outside already so we can use to pull post data and set res.
 
-	console.log('Function loginUser...');
-
-	var user = {};
-	var myFlag = false;
-
-	console.log('Trying findOne - email: '+email+', pw: '+passWord+' | slower but holds cursor open...');
-	// will have to change this because find() is order of magnitude faster than findone.
-
-	SportsUser.findOne({ email: email, passWord: passWord}, function(err, user) {
-		
-		if(err) {
-
-			console.log('Could not find the user when logging in: '+err);
-			myFlag = true;
-
-		} else {
-
-			var d = new Date();
-			thisDate = d.getTime(); // needed
-
-			console.log('err: '+err);
-			console.log('Found user: '+user);
-
-			var logins = user.logins;
-		 	logins++;
-
-		 	// put back into db
-		 	user.logins = logins; // set login times/ track usage.
-		 	
-		 	var lastLoginDate = user.modifiedAt; // get first for differential on login times later on.
-		 	user.modifiedAt = thisDate; // set modified at time for last login.
-		 	// get
-		 	var myView = user.myView; // get the view this person will land on when logged in
-
-		 	// save this to DB with time for timeout. for dev we'll use 60 min timeout.
-		 	var uniqueLoginID = getUniqueID();  // get 30 char unique id for this session....fake session id.
-		 	var timeOutuniqueLoginID = new Date();
-		 	timeOutuniqueLoginID.setMinutes(timeOutuniqueLoginID.getMinutes()+appSessionTimeout);
-		 	// see definition in var def at begging of app.
-
-			// found the user already. log em in and send them along
-			// found, so log in user and set fake session id for identification.
-			console.log('Updating session data in DB for this user before we login.');	
-			
-			SportsUser.update( { email: email, passWord: passWord }, {$set: {logins: logins, uniqueLoginID: uniqueLoginID, timeOutuniqueLoginID: timeOutuniqueLoginID,
-modifiedAt: thisDate }}, function(err) { // update info for user.
-	 			
-	 			if(err) { // we have to check isFromRegister to determine if we login or are checking from register
-	 				
-	 				// somehow we are ending up here even after adding a new user.
-	 				console.log('Could not log this user in and update login information.'); // we need to use a flag for how we entered this function.
-	 				// cannot update.  prob shouldn't res.render
-	 				myFlag = false;
-
-		 		} else  {
-		 			console.log('Normal Login, all good - move along...');
-		 		
-		 			// page depends on who it is.
-		 			console.log('****** Redirecting to Inside Wall ******');
-		 			myFlag = true;
-		 		}
-
-	 		});
-	 	}
-
-	});
-	console.log('Exiting checkLoginUser...',myFlag);
-	return myFlag;
-}
 // ************************************ SERVER
 // listen on 8000
 console.log("\n\nSports Team Manager - Listening on 8000, on the AM...oh yeah!");
