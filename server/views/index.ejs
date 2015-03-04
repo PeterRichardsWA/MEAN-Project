@@ -1,25 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
+<html ng-app='SportsApp'>
 <head>
+    <script src='/scripts/externals/angular.min.js'/></script>
+    <script src='/scripts/externals/angular-route.min.js'/></script>
+    <script src='/scripts/externals/jquery-2.1.3.min.js'/></script>
+    <script src='/scripts/externals/jquery-ui.js'/></script>
+    <link rel="stylesheet" type="text/css" href="/scripts/externals/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="/css/styles.css">
+    <script src='/scripts/app.js'/></script>
+    <script>
+    	$(document).ready(function() {
+    		// $('saRegister').on('click', function() {
+    		// 	$('#table_mid').show();
+    		// 	$('#saButName').innerHTML('REGISTER');
+    		// 	$('#saTitle').innerHTML('Registration');
+    		// });
+    	});
+    	function hideReg() {
+    		$('#table_mid').slideUp();
+			$('#saButName').html('LOGIN');
+			$('#saTitle').html('Login');
+			// $('#container').show(); 
+    	}
+	    function showReg() {
+			$('#table_mid').slideDown();
+			$('#saButName').html('REGISTER');
+			$('#saTitle').html('Registration');
+		}
+    </script>
 	<meta charset="UTF-8">
-	<title>Landing Page for Sports Management</title>
-	<link rel="stylesheet" type="text/css" href="styles.css">
+	<title>Sports Management System - View Live!</title>
+	<style>
+	*{
+		font-family: 'helvetica neu',tahoma,verdana;
+	}
+	html {
+		height:100%;
+	}
+	body {
+		height:100%;
+		margin:0;
+		padding:0;
+	}
+	.halfl {
+		float: left;
+		width: 50%;
+		text-align: left;
+	}
+	.halfr {
+		float: left;
+		width: 50%;
+		text-align: right;
+		font-size: 8pt;
+	}
+	.clear {
+		clear: both;
+	}
+	#floater {
+		/*makes floating box*/
+		position: absolute;
+		z-index: -1;
+		left: 30%;
+		top: 20%;
+		z-index: 1000;
+		background-color: #ffffff;
+		border-radius: 8px;
+		border-color: #ffffff;
+		padding: 30px;
+		box-shadow: 4px 4px #ffffff;
+		opacity: .9;
+		width: auto;
+	}
+	#container {
+		/*image background*/
+		z-index: 100;
+		margin: 0;
+		width: 100%;
+		height: 100%;
+		position: relative;
+	}
+	.footer {
+		width: auto;
+	}
+	.bg {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	img {
+		width: 100%;
+		height: 100%;
+	}
+	input.submit {
+		border: 1px solid #8e8e8e;
+		border-radius: 3px;
+		box-shadow: 3px 3px #000000;
+		background-color: 
+	}
+	</style>
+	<!--[if IE 6]>
+	<style type="text/css">
+	/* some css fixes for IE browsers */
+	html {
+		overflow-y:hidden;
+		}
+	body {
+		overflow-y:auto;
+	}
+	#bg {
+		position:absolute; z-index:-1;
+	}
+	#floater {
+		position:static;
+	}
+	</style>
+	<![endif]-->
 </head>
 <body>
 
-	<div id='container'>
-
-	<div id='login'>
-		<a href='/users.html#/loginuser'><button>LOGIN</button></a>
+<div id='container'>
+	<div id='bg'><img src='/images/all_sports_background.jpg'></div>
+	<div id='floater' ng-app='myApp'>
+		<div ng-view=''></div>
 	</div>
+</div>
 
-	<div id='register'>
-		<a ref='/users.html#/registeruser'><button>REGISTER</button></a>
-	</div>
-
-	</div>
-
-
-	<div id='footer'></div>
 </body>
 </html>

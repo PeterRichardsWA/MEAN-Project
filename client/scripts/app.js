@@ -1,4 +1,7 @@
-// build module. myApp should be same for all references.
+// 
+//
+// SPORTS MODULE FOR UNREGISTERED OR NON-LOGGED IN USERS
+//
 var myApp = angular.module('SportsApp', ['ngRoute']);
 
 // **************************
@@ -15,19 +18,7 @@ myApp.config(function ($routeProvider) {
     $routeProvider
     
     .when('/',{
-        redirectTo: '/'
-    })
-
-    .when('/loginuser',{
-        templateUrl: '/partials/login.html',
-    })
-
-    .when('/profile',{
-        templateUrl: '/partials/profile.html',
-    })
-
-    .when('/coach',{
-        templateUrl: '/partials/coaches.html',
+         templateUrl: '/partials/login.html',
     })
 
     .otherwise({
@@ -102,18 +93,3 @@ myApp.controller('loginController', function($scope, loginFactory) {
 	}
 
 });
-
-//
-// CONT - profile
-//
-myApp.controller('profileController', ['$scope', 'profileFactory', function($scope, profileFactory) {
-
-    $scope.user = []; // make sure customers blank
-
-    $scope.profileUser = function() { // add new customer to list
-        $scope.login.email;
-        $scope.login.password;
-        loginFactory.loginUser($scope);
-    }
-
-}]);
