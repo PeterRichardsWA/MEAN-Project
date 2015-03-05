@@ -25,7 +25,7 @@ var server = app.listen(8000);
 // require bodyParser since we need to handle post data for adding a user
 app.use(bodyParser.urlencoded({ extended: true })); // stops deprication error as exended is false by default in new ver
 // initialize session
-app.use(session({secret: '2343-234-2-209864-345u09'})); // use some secret code for encryption key
+//app.use(express.session({secret: '2343-234-2-209864-345u09'})); // use some secret code for encryption key
 var eSession;
 var appSessionTimeout = 60; // in minutes
 
@@ -71,7 +71,7 @@ app.get('/', function(req, res) {
 	res.render('index');
 })
 
-// ROUTE - AFTER LOGGED IN.
+// ROUTE - AFTER LOGGED IN. should come from angular redirect.
 app.get('/sports', function(req, res) {
 	console.log('HERE!!!!!!!!!');
 	res.render('users', {name: 'Peter', lastLogin: '1/2/2015'});
@@ -133,32 +133,15 @@ app.get('/getdata/:id', function(req, res) { // catch the href outside of the fo
 //
 app.post('/login', function(req, res) {
 	
-	//console.log('POST: ', req.body);
-
- 	// redir should happen from here!!
- 	//console.log('before function: ', res);
- 	if(checkUserLoginReg(res, req.body)) {
- 		res.redirect('/sports');
- 	}
- 	// 	console.log('made it.');
- 	// 	res.redirect('/sports');
- 	// } else {
- 	//setTimeout(function(){}, 35000);
- 	console.log('We made it back to post.....................................');
- 	// 	res.redirect('/');
- 	// }
- 	//console.log('end of function: ', res);
-});
-
-function checkUserLoginReg(res, userInfo) {
-
-	console.log('*** checking user.  log in, or register....');
- 	console.log(' ******* LEVEL 1');
-
- 	// the only two "should be" guaranteed entry data points
- 	var email = userInfo.email;
-	var passWord = userInfo.password;
-	var success = false;
+	// all we do is create or check login, then return JSON data to angular.
+	var email = req.params.email,
+		passWord = req.params.password,
+		confirm = req.params.confirm,
+		firstName = req.params.firstname,
+		lastName = req.params.lastname,
+		userType = req.params.usertype,
+		success = false,
+		user = {};
 
 	// if not valid email.  should we email them and have them verify later? yes!
 	var patt = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -166,151 +149,80 @@ function checkUserLoginReg(res, userInfo) {
 	console.log('Email regEx is:', regResult);
 
 	if(regResult && passWord != null) { // looks good.
-				
-		console.log('Email and password is good...');
-		var user = {};
+		
+		// anticipate good login so set timeout and get ready. 
+		var uniqueLoginID = getUniqueID();  // get 30 char unique id for this session....fake session id.
+		var timeOutuniqueLoginID = new Date();
+		timeOutuniqueLoginID.setMinutes(timeOutuniqueLoginID.getMinutes()+appSessionTimeout);
 
-		SportsUser.find({ email: email, passWord: passWord}, function(err, users) {
-			console.log(' ******* LEVEL 2',users[0]);
+		SportsUser.findOne({ email: email, passWord: passWord}, function(err, user) {
 			if(err) {
+				// found. login and return JSON
+				var logins = user.logins;
+			 	logins++;
 
+			 	// do updatae of this record using $set command to keep rest of data.
+			 	SportsUser.update({ email: email, passWord: passWord }, {$set: {logins: logins, uniqueLoginID: uniqueLoginID, timeOutuniqueLoginID: timeOutuniqueLoginID,
+	modifiedAt: thisDate }}, function(err) { // update info for user.
+		 			if(err) {
+		 				// err updating.  return err JSON
+		 			} else {
+		 				// good...don't care.
+		 				// returning user JSON this way will be old data unless we update.
+		 				user.logins = logins;
+		 				user.uniqueLoginID = uniqueLoginID;
+		 				user.timeOutuniqueLoginID = timeOutuniqueLoginID;
+		 				user.modifiedAt = thisDate;
+		 			}
+		 		});
+
+			} else {
+
+				// register and return JSON
 				if(passWord == confirm && confirm != null) {
-					console.log('Confirm matches password...');
-							
-					/// **************** CHANGE TO FIND() from FINDONE() cause the cursor is FAST! WAY FASTER!
-					//now see if they've already registered! if they got the password with email we'll just log them in.
-					// create new user.
-					console.log('Good to go! Create new user.');
-
+					// pw's match so create new user.
+					
 					d = new Date();
 				 	thisDate = d.getTime();
 
-				 	// ********** FUTURE CHANGE. validate by email before we do an auto login!
-				 	// save this to DB with time for timeout. for dev we'll use 60 min timeout.
-				 	var uniqueLoginID = getUniqueID();  // get 30 char unique id for this session....fake session id.
-				 	var timeOutuniqueLoginID = new Date();
-				 	timeOutuniqueLoginID.setMinutes(timeOutuniqueLoginID.getMinutes()+appSessionTimeout);
-					console.log('New timeout: ', timeOutuniqueLoginID);
-
-				 	// hardcoded view for now.
+					// hardcoded view for now.
 					myView = 'coaches'; // ejs view
 					title = 'Mr.';
 					teamName = 'Newport Volleyball';
 				
-					// store all data in user object for MongoDB
-					var myData = {
-
+					// store all data in user JSON for MongoDB
+					var user = {
 						email: email,			// id to login with password
-						passWord: password,
-						firstName: userInfo.firstname,
-						lastName: userInfo.lastname,
+						passWord: passWord,
+						firstName: firstName,
+						lastName: lastName,
 						
 						title: title,			// title - coach, mom, dad, mr, mrs, etc.
 						team: teamName,			// name of team or self!
 						typeOfUser: typeOfUser,	// type of user
 						myView: myView,			// view they want to land on.
 
-						logins: 1,
+						logins: 1, // first time in.
 						uniqueLoginID: uniqueLoginID,
 						timeOutuniqueLoginID: timeOutuniqueLoginID,
 						createdAt: thisDate,
 						modifiedAt: thisDate };
 
-					console.log('Save to database');
-					// found, so log in user and set fake session id for identification.
+						// inserts to database by using upsert command, and write commit level to 0 for quick return
+						SportsUser.update({ email: email, passWord: passWord}, user, {upsert: true, w: 0}, true); // actual insertion to DB here.
 
-					// sportsuser.save(function(err) { // actual insertion to DB here.
-				 	SportsUser.update({ email: email, passWord: passWord}, myData, {upsert: true, w: 0}, true); // actual insertion to DB here.
-				 		
-				 		console.log(' ******* LEVEL 3a');
-				 		if(err) {
-				 			
-				 			console.log('Could not save new user to database...');
-				 			// res.redirect('/');
+				} else {
+					// passwords don't match. error JSON
 
-				 		} else {
-
-				 			console.log('No error in saving new user...');
-
-				 			console.log('***** Redirecting after registration add ******');
-				 			success = true;
-				 			// res.redirect('/sports');
-				 		}
-
-			 		// });
-
-				} // checking password on register for confirm
-
-			} else {
-
-				// log them in
-				console.log('*** User found, log them in.');
-
-				var d = new Date();
-				thisDate = d.getTime(); // needed
-
-				console.log('err: '+err);
-				console.log('Found user: '+users[0]);
-
-				var logins = users[0].logins;
-			 	logins++;
-
-			 	// put back into db
-			 	user.logins = logins; // set login times/ track usage.
-			 	
-			 	var lastLoginDate = user.modifiedAt; // get first for differential on login times later on.
-			 	user.modifiedAt = thisDate; // set modified at time for last login.
-			 	// get
-			 	var myView = users[0].myView; // get the view this person will land on when logged in
-
-			 	// save this to DB with time for timeout. for dev we'll use 60 min timeout.
-			 	var uniqueLoginID = getUniqueID();  // get 30 char unique id for this session....fake session id.
-			 	var timeOutuniqueLoginID = new Date();
-			 	timeOutuniqueLoginID.setMinutes(timeOutuniqueLoginID.getMinutes()+appSessionTimeout);
-			 	// see definition in var def at begging of app.
-
-				// found the user already. log em in and send them along
-				// found, so log in user and set fake session id for identification.
-				console.log('Updating session data in DB for this user before we login.');	
-				
-				SportsUser.update( { email: email, passWord: passWord }, {$set: {logins: logins, uniqueLoginID: uniqueLoginID, timeOutuniqueLoginID: timeOutuniqueLoginID,
-	modifiedAt: thisDate }}, function(err) { // update info for user.
-		 			console.log(' ******* LEVEL 3b');
-		 			if(err) { // we have to check isFromRegister to determine if we login or are checking from register
-		 				
-		 				// somehow we are ending up here even after adding a new user.
-		 				console.log('Could not log this user in and update login information.'); // we need to use a flag for how we entered this function.
-		 				// cannot update.  prob shouldn't res.render
-		 				// res.redirect('/');
-
-			 		} else  {
-			 			console.log('Normal Login, all good - move along...');
-			 		
-			 			// page depends on who it is.
-			 			console.log('****** Redirecting to Inside Wall ******');
-			 			success = true;
-
-			 			// console.log(' ********* headers sent:',res.headerSent);
-
-			 			//res.redirect('/sports');
-			 			// stop();
-			 		}
-
-		 		}); // end of err on update
-
-			} // end of err on findone
-		
-		}); // close of sportuser.findone
-
+				}
+			}
+		});
 	} else {
-
-		console.log('Email or Password bad.');
-		// res.redirect('/');
-
-	} // end of email and pw check
-	return success;
-};
-
+		// regex or password was null
+	}
+	// send JSON to angular or Ajax. if blank, then not valid.
+	res.send(user); // question: do we return this, or set session and move to inside?
+});
 
 //
 // handle errors passed to us from angular!

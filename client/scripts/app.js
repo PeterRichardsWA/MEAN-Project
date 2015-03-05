@@ -2,27 +2,51 @@
 //
 // SPORTS MODULE FOR UNREGISTERED OR NON-LOGGED IN USERS
 //
-var myApp = angular.module('SportsApp', ['ngRoute']);
+var myApp = angular.module('SportsApp', ['ngRoute','ngResource'])
+    .config( function($routeProvider, $locationProvider, $httpProvider) { // checks to see if user still connected for security
+        var checkLoggedin = function($q, $timeout, $http, $location, $rootScope) {
+            // Initialize a new promise
+            var deferred = $q.defer();
 
-// **************************
-// REMEMBER - ALL CONSOLE.LOGS show on the client only in this app.js file
-//***************************
+            // Make an AJAX call to check if the user is logged in
+            $http.get('/loggedin')
+                .success( function(user) { // url to provider that returns our user data.
+                    // Authenticated? yes!
+                    if (user !== '0') {
+                        /*$timeout(deferred.resolve, 0);*/
+                        deferred.resolve();
 
- //  use the config method to set up routing:
- // will routes fire on reload? we still have to reload user data if refresh hit
- // because it will be lost.  session only stores a unique id that is in the database for that user with a time
- // stamp that will keep them from handing out user id. time out the unique id.
+                    } else { // Not Authenticated
+                        $rootScope.message = 'You need to log in.';
+                        //$timeout(function(){deferred.reject();}, 0);
+                        deferred.reject();
+                        $location.url('/login');
+                    
+                    }
+                });
+            return deferred.promise;
+        };
+    });
+    
+    // **************************
+    // REMEMBER - ALL CONSOLE.LOGS show on the client only in this app.js file
+    //***************************
+
+    //  use the config method to set up routing:
+    // will routes fire on reload? we still have to reload user data if refresh hit
+    // because it will be lost.  session only stores a unique id that is in the database for that user with a time
+    // stamp that will keep them from handing out user id. time out the unique id.
 
 
 myApp.config(function ($routeProvider) {
     $routeProvider
     
     .when('/',{
-         templateUrl: '/partials/login.html',
+        templateUrl: '/partials/login.html',
     })
 
     .when('/login',{
-         templateUrl: '/partials/login.html',
+        templateUrl: '/partials/login.html',
     })
 
     .otherwise({
@@ -33,67 +57,49 @@ myApp.config(function ($routeProvider) {
 
 // **** $digest to update $scope
 
-// a factory is nothing more than a function that returns an object literal
-myApp.factory('loginFactory', function($http) {
-
-    var factory = {};
-
-    factory.saveLogin = function($params) {
-        //console.log('params: ',$params);
-        return $http({
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            url: '/login', // this may or may not cause issue depending on who's handling routes.
-            method: 'POST',
-            data: $params
-        })
-        .success(function(data) {
-            //console.log('saved to db');
-            // all good.
-        })
-        .error(function(err) {
-             //console.log('error saving or logging in');
-             redirectTo('/errors/'+err); // pass code for error
-        })
-        //console.log('firing savelogin');
-    }
-
-    factory.loginUser = function(loginData) {
-        //console.log('loginUser', loginData);
-        $params = $.param({
-            'email': loginData.login.email,
-            'password': loginData.login.password,
-            'confirm': loginData.login.confirm,
-            'firstname': loginData.login.firstname,
-            'lastname': loginData.login.lastname,
-            'usertype': loginData.login.usertype });
-        this.saveLogin($params);
-    }
-	// most important step: return the object so it can be used by the rest of our angular code
-	//console.log(factory);
-	return factory;
-});
-
 //
+// Catch AJAX errors
+// $httpProvider.interceptors.push(function($q, $location) {
+//   return {
+//     response: function(response) {
+//       // do something on success
+//       return response;
+//     },
+//     responseError: function(response) {
+//       if (response.status === 401)
+//         $location.url('/login');
+//       return $q.reject(response);
+//     }
+//   };
+// });
+
 //
 // CONTROLLERS
 // **********************************************************************
 //
 // CONT - login
 //
-myApp.controller('loginController', function($scope, loginFactory) {
+myApp.controller('loginController', function($scope, $rootScope, $http, $location) {
 
-	$scope.user = []; // make sure customers blank
+	$scope.user = {}; // make sure customers blank
 
 	$scope.loginUser = function() { // add new customer to list
-        //console.log($scope.login.email); // making it here.
-        $scope.login.email;
-        $scope.login.password;
-        // check if these exist?
-        $scope.login.confirm;
-        $scope.login.firstname;
-        $scope.login.lastname;
-        $scope.login.usertype;
-        loginFactory.loginUser($scope);
+        
+        $http.post('/login', {
+            email: $scope.login.email,
+            password: $scope.login.password,
+            confirm: $scope.login.confirm,
+            firstname: $scope.login.firstname,
+            lastname: $scope.login.lastname,
+            usertype: $scope.login.usertype
+        })
+        .success(function(user) {
+            $rootScope.message = 'Auth successful';
+            this.parent.get('/sports'); // we need get so the server will put in correct view.
+            // $location.url('/users');   // this does angular redirect.
+        })
+        .error(function() {
+            $location.url('/'); //back to login page.
+        });
 	}
-
 });

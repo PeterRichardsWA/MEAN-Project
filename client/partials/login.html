@@ -4,7 +4,7 @@
         <h2 id='saTitle'>Login</h2>
     </div>
 
-    <div id='login'><form>
+    <div id='login'><form method='post' action='/login'>
         <table id='add'>
             <tbody>
                 <tr>
@@ -37,7 +37,7 @@
             </tbody>
             <tbody id='table_foot'>
                 <tr>
-                    <td colspan=2 align='right'><a href='#' class='button button-blue' ng-click='loginUser()'><span id='saButName'>LOGIN</span></a></td></form>
+                    <td colspan=2 align='right'><a href='#' class='button button-blue' onClick='this.submit()'><span id='saButName'>LOGIN</span></a></td></form>
                 </tr>
             </tbody>
         </table>
