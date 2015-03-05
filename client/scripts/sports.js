@@ -17,7 +17,7 @@ var myApp = angular.module('SportsApp', ['ngRoute']);
 myApp.config(function ($routeProvider) {
     $routeProvider
     
-    .when('/sports',{
+    .when('/',{
          templateUrl: '/partials/view_data.html',
     })
 

@@ -21,8 +21,12 @@ myApp.config(function ($routeProvider) {
          templateUrl: '/partials/login.html',
     })
 
+    .when('/login',{
+         templateUrl: '/partials/login.html',
+    })
+
     .otherwise({
-        redirectTo: '/'
+        templateUrl: '/partials/login.html'
     });
 });
 //
@@ -35,7 +39,7 @@ myApp.factory('loginFactory', function($http) {
     var factory = {};
 
     factory.saveLogin = function($params) {
-        console.log('params: ',$params);
+        //console.log('params: ',$params);
         return $http({
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             url: '/login', // this may or may not cause issue depending on who's handling routes.
@@ -43,18 +47,18 @@ myApp.factory('loginFactory', function($http) {
             data: $params
         })
         .success(function(data) {
-            console.log('saved to db');
+            //console.log('saved to db');
             // all good.
         })
         .error(function(err) {
-             console.log('error saving or logging in');
+             //console.log('error saving or logging in');
              redirectTo('/errors/'+err); // pass code for error
         })
-        console.log('firing savelogin');
+        //console.log('firing savelogin');
     }
 
     factory.loginUser = function(loginData) {
-        console.log('loginUser', loginData);
+        //console.log('loginUser', loginData);
         $params = $.param({
             'email': loginData.login.email,
             'password': loginData.login.password,
@@ -81,7 +85,7 @@ myApp.controller('loginController', function($scope, loginFactory) {
 	$scope.user = []; // make sure customers blank
 
 	$scope.loginUser = function() { // add new customer to list
-        console.log($scope.login.email); // making it here.
+        //console.log($scope.login.email); // making it here.
         $scope.login.email;
         $scope.login.password;
         // check if these exist?

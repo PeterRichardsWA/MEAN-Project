@@ -3,22 +3,19 @@
 //
 //
 //
-//
-//
-//
-//
 // required modules
-var path = require('path'),
-	// load mongoose
-	mongoose = require('mongoose'),
+var express = require('express');
+var path = require('path');
+var mongoose = require('mongoose');
 	// mongoose required order of operations:
 	// require -> connect -> Schema -> Model -> route
-	express = require('express'),
-	app = express(),
-	session = require('express-session'),
-	bodyParser = require('body-parser'),
+var bodyParser = require('body-parser');
+
+
+// initialize
+var app = express();
 	// io = require('socket.io'),
-	server = app.listen(8000);
+var server = app.listen(8000);
 
 // start listening
 // var io = require('socket.io').listen(server, function() {
@@ -76,6 +73,7 @@ app.get('/', function(req, res) {
 
 // ROUTE - AFTER LOGGED IN.
 app.get('/sports', function(req, res) {
+	console.log('HERE!!!!!!!!!');
 	res.render('users', {name: 'Peter', lastLogin: '1/2/2015'});
 });
 
@@ -135,19 +133,24 @@ app.get('/getdata/:id', function(req, res) { // catch the href outside of the fo
 //
 app.post('/login', function(req, res) {
 	
-	console.log('POST: ', req.body);
-	console.log(' ******* LEVEL 1');
+	//console.log('POST: ', req.body);
 
  	// redir should happen from here!!
- 	if(checkUserLoginReg(req.body)) {
+ 	//console.log('before function: ', res);
+ 	if(checkUserLoginReg(res, req.body)) {
  		res.redirect('/sports');
- 	} else {
- 		res.redirect('/');
  	}
-
+ 	// 	console.log('made it.');
+ 	// 	res.redirect('/sports');
+ 	// } else {
+ 	//setTimeout(function(){}, 35000);
+ 	console.log('We made it back to post.....................................');
+ 	// 	res.redirect('/');
+ 	// }
+ 	//console.log('end of function: ', res);
 });
 
-function checkUserLoginReg(userInfo) {
+function checkUserLoginReg(res, userInfo) {
 
 	console.log('*** checking user.  log in, or register....');
  	console.log(' ******* LEVEL 1');
@@ -167,8 +170,8 @@ function checkUserLoginReg(userInfo) {
 		console.log('Email and password is good...');
 		var user = {};
 
-		SportsUser.findOne({ email: email, passWord: passWord}, function(err, user) {
-			console.log(' ******* LEVEL 2');
+		SportsUser.find({ email: email, passWord: passWord}, function(err, users) {
+			console.log(' ******* LEVEL 2',users[0]);
 			if(err) {
 
 				if(passWord == confirm && confirm != null) {
@@ -217,38 +220,39 @@ function checkUserLoginReg(userInfo) {
 					// found, so log in user and set fake session id for identification.
 
 					// sportsuser.save(function(err) { // actual insertion to DB here.
-				 	SportsUser.update({ email: email, passWord: passWord}, myData, {upsert: true}, function(err) { // actual insertion to DB here.
+				 	SportsUser.update({ email: email, passWord: passWord}, myData, {upsert: true, w: 0}, true); // actual insertion to DB here.
 				 		
-				 		console.log(' ******* LEVEL 3');
+				 		console.log(' ******* LEVEL 3a');
 				 		if(err) {
 				 			
 				 			console.log('Could not save new user to database...');
-				 		
+				 			// res.redirect('/');
+
 				 		} else {
 
 				 			console.log('No error in saving new user...');
 
 				 			console.log('***** Redirecting after registration add ******');
 				 			success = true;
+				 			// res.redirect('/sports');
 				 		}
 
-			 		});
+			 		// });
 
 				} // checking password on register for confirm
 
 			} else {
 
-
 				// log them in
-				console.log('user found, log them in!');
+				console.log('*** User found, log them in.');
 
 				var d = new Date();
 				thisDate = d.getTime(); // needed
 
 				console.log('err: '+err);
-				console.log('Found user: '+user);
+				console.log('Found user: '+users[0]);
 
-				var logins = user.logins;
+				var logins = users[0].logins;
 			 	logins++;
 
 			 	// put back into db
@@ -257,7 +261,7 @@ function checkUserLoginReg(userInfo) {
 			 	var lastLoginDate = user.modifiedAt; // get first for differential on login times later on.
 			 	user.modifiedAt = thisDate; // set modified at time for last login.
 			 	// get
-			 	var myView = user.myView; // get the view this person will land on when logged in
+			 	var myView = users[0].myView; // get the view this person will land on when logged in
 
 			 	// save this to DB with time for timeout. for dev we'll use 60 min timeout.
 			 	var uniqueLoginID = getUniqueID();  // get 30 char unique id for this session....fake session id.
@@ -277,6 +281,7 @@ function checkUserLoginReg(userInfo) {
 		 				// somehow we are ending up here even after adding a new user.
 		 				console.log('Could not log this user in and update login information.'); // we need to use a flag for how we entered this function.
 		 				// cannot update.  prob shouldn't res.render
+		 				// res.redirect('/');
 
 			 		} else  {
 			 			console.log('Normal Login, all good - move along...');
@@ -284,6 +289,11 @@ function checkUserLoginReg(userInfo) {
 			 			// page depends on who it is.
 			 			console.log('****** Redirecting to Inside Wall ******');
 			 			success = true;
+
+			 			// console.log(' ********* headers sent:',res.headerSent);
+
+			 			//res.redirect('/sports');
+			 			// stop();
 			 		}
 
 		 		}); // end of err on update
@@ -295,13 +305,9 @@ function checkUserLoginReg(userInfo) {
 	} else {
 
 		console.log('Email or Password bad.');
+		// res.redirect('/');
 
 	} // end of email and pw check
-
-	if(success) {
-		// these will be set if new OR login
-		setMySessionID(uniqueLoginID, timeOutuniqueLoginID); // set the session id into session once!
-	}
 	return success;
 };
 
@@ -363,9 +369,9 @@ app.delete('/users/:id', function(req, res) {
 });
 
 // catch errors and bad URLS
-app.get('*', function(req, res) {
-	res.send('404');
-})
+// app.get('*', function(req, res) {
+// 	res.send('404');
+// })
 // socket server - may not implement due to time.
 // io.sockets.on('connection', function(socket) {
 // 	console.log('****** SOCKET LISTENER STARTED ******');
@@ -394,7 +400,6 @@ function setMySessionID(uniqueLoginID, timeOutuniqueLoginID) {
 	console.log('** Setting session data **');
 	eSession.fakeSessionID = uniqueLoginID;
 	eSession.timeOut = timeOutuniqueLoginID;
-	return;
 }
 
 //
